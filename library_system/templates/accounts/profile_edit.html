@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Edit My Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Edit Profile</h2>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" 
+                                 class="rounded-circle mb-3" 
+                                 id="profile-picture-preview"
+                                 width="200" height="200">
+                            {% else %}
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                 id="profile-picture-preview"
+                                 style="width: 200px; height: 200px;">
+                                <i class="fas fa-user fa-4x text-muted"></i>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <input type="file" 
+                                       class="form-control" 
+                                       id="id_profile_picture" 
+                                       name="profile_picture"
+                                       accept="image/*"
+                                       onchange="previewImage(this)">
+                            </div>
+                            <small class="text-muted">Max size 2MB. JPG, PNG only.</small>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_first_name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="id_first_name" 
+                                           name="first_name" value="{{ user.first_name }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_last_name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="id_last_name" 
+                                           name="last_name" value="{{ user.last_name }}">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="id_email" 
+                                       name="email" value="{{ user.email }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_phone_number" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="id_phone_number" 
+                                       name="phone_number" value="{{ user.phone_number }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_department" class="form-label">Department</label>
+                                <input type="text" class="form-control" id="id_department" 
+                                       name="department" value="{{ user.department }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'account_dashboard' %}" class="btn btn-outline-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Change Password</h5>
+                <a href="{% url 'account_change_password' %}" class="btn btn-outline-primary">
+                    Change Password
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('profile-picture-preview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (preview.tagName === 'IMG') {
+                preview.src = e.target.result;
+            } else {
+                // Replace the placeholder div with an image
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'rounded-circle mb-3';
+                img.width = 200;
+                img.height = 200;
+                img.id = 'profile-picture-preview';
+                preview.parentNode.replaceChild(img, preview);
+            }
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}
