@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Librarian Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center">
+                <h3 class="card-title">Quick Actions</h3>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'book-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Add New Book
+                    </a>
+                    <a href="{% url 'book-import' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-import me-2"></i>Bulk Import
+                    </a>
+                    <a href="{% url 'user-list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-users me-2"></i>Manage Users
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Today's Stats</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        New Checkouts
+                        <span class="badge bg-primary rounded-pill">{{ stats.today_checkouts }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Returns
+                        <span class="badge bg-primary rounded-pill">{{ stats.today_returns }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Overdue Books
+                        <span class="badge bg-danger rounded-pill">{{ stats.overdue_books }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Overdue Books</h5>
+                    <a href="{% url 'overdue-list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                
+                {% if overdue_books %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Book</th>
+                                <th>Borrower</th>
+                                <th>Due Date</th>
+                                <th>Days Overdue</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in overdue_books %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'book-detail' loan.book.id %}">{{ loan.book.title }}</a>
+                                    <br>
+                                    <small class="text-muted">{{ loan.book.author }}</small>
+                                </td>
+                                <td>
+                                    <a href="{% url 'user-detail' loan.user.id %}">{{ loan.user.get_full_name }}</a>
+                                    <br>
+                                    <small class="text-muted">{{ loan.user.email }}</small>
+                                </td>
+                                <td>{{ loan.due_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-danger">{{ loan.days_overdue }}</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            hx-post="{% url 'send-reminder' loan.id %}"
+                                            hx-target="#loan-{{ loan.id }}"
+                                            hx-swap="outerHTML">
+                                        <i class="fas fa-envelope me-1"></i>Remind
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i> No overdue books today!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Recent Activity</h5>
+                    <a href="{% url 'activity-log' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                
+                <div class="list-group">
+                    {% for activity in recent_activity %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-{{ activity.icon }} text-{{ activity.color }} me-2"></i>
+                                {{ activity.message }}
+                            </h6>
+                            <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                        </div>
+                        <p class="mb-1 text-muted small">
+                            {% if activity.user %}
+                            By {{ activity.user.get_full_name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-info">
+                        No recent activity to display.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
