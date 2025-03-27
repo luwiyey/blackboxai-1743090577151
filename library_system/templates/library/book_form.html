@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add New{% endif %} Book{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title mb-4">
+                    {% if form.instance.pk %}
+                    <i class="fas fa-edit me-2"></i>Edit Book
+                    {% else %}
+                    <i class="fas fa-plus-circle me-2"></i>Add New Book
+                    {% endif %}
+                </h2>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <div class="mb-3">
+                                {% if form.instance.cover_image %}
+                                <img src="{{ form.instance.cover_image.url }}" 
+                                     class="img-thumbnail mb-3" 
+                                     id="cover-preview"
+                                     style="max-height: 300px;">
+                                {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center mb-3" 
+                                     id="cover-preview"
+                                     style="height: 300px; width: 100%;">
+                                    <i class="fas fa-book-open fa-4x text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <input type="file" 
+                                       class="form-control" 
+                                       id="id_cover_image" 
+                                       name="cover_image"
+                                       accept="image/*"
+                                       onchange="previewImage(this)">
+                            </div>
+                            <small class="text-muted">Recommended size: 500x800px. Max 2MB.</small>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="id_title" class="form-label">Title*</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.title.errors.as_text }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_author" class="form-label">Author*</label>
+                                {{ form.author }}
+                                {% if form.author.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.author.errors.as_text }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_isbn" class="form-label">ISBN*</label>
+                                    {{ form.isbn }}
+                                    {% if form.isbn.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.isbn.errors.as_text }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_publication_date" class="form-label">Publication Date</label>
+                                    {{ form.publication_date }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_quantity" class="form-label">Quantity*</label>
+                                {{ form.quantity }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_categories" class="form-label">Categories</label>
+                                {{ form.categories }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% if form.instance.pk %}{% url 'book-detail' form.instance.pk %}{% else %}{% url 'book-list' %}{% endif %}" 
+                           class="btn btn-outline-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if form.instance.pk %}Update{% else %}Add{% endif %} Book
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('cover-preview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (preview.tagName === 'IMG') {
+                preview.src = e.target.result;
+            } else {
+                // Replace the placeholder div with an image
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'img-thumbnail mb-3';
+                img.style.maxHeight = '300px';
+                img.id = 'cover-preview';
+                preview.parentNode.replaceChild(img, preview);
+            }
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}
