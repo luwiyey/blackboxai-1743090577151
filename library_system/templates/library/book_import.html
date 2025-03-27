@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Import Books{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title mb-4">
+                    <i class="fas fa-file-import me-2"></i>Bulk Import Books
+                </h2>
+                
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-info-circle me-2"></i>Import Instructions</h5>
+                    <ol class="mb-0">
+                        <li>Download the <a href="{% url 'book-import-template' %}" class="alert-link">template file</a></li>
+                        <li>Fill in book details following the format</li>
+                        <li>Upload the completed CSV file below</li>
+                    </ol>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" id="import-form">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="id_csv_file" class="form-label">CSV File*</label>
+                        <input type="file" class="form-control" id="id_csv_file" name="csv_file" accept=".csv" required>
+                        <div class="form-text">Max file size: 5MB. Must be in CSV format.</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="id_has_headers" name="has_headers" checked>
+                            <label class="form-check-label" for="id_has_headers">
+                                File contains header row
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Import Options</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="conflict_resolution" 
+                                   id="id_skip_conflicts" value="skip" checked>
+                            <label class="form-check-label" for="id_skip_conflicts">
+                                Skip duplicate entries (by ISBN)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="conflict_resolution" 
+                                   id="id_update_conflicts" value="update">
+                            <label class="form-check-label" for="id_update_conflicts">
+                                Update existing books (by ISBN)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'book-list' %}" class="btn btn-outline-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="import-button">
+                            <i class="fas fa-upload me-2"></i>Import Books
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mt-4" id="preview-section" style="display: none;">
+            <div class="card-body">
+                <h5 class="card-title">Import Preview</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="preview-table">
+                        <thead>
+                            <tr id="preview-headers"></tr>
+                        </thead>
+                        <tbody id="preview-data"></tbody>
+                    </table>
+                </div>
+                <div class="alert alert-warning mt-3" id="preview-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="warning-message"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('id_csv_file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const previewSection = document.getElementById('preview-section');
+    const previewTable = document.getElementById('preview-table');
+    const previewHeaders = document.getElementById('preview-headers');
+    const previewData = document.getElementById('preview-data');
+    const previewWarning = document.getElementById('preview-warning');
+    
+    // Reset preview
+    previewHeaders.innerHTML = '';
+    previewData.innerHTML = '';
+    previewWarning.style.display = 'none';
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        const lines = content.split('\n').slice(0, 6); // Preview first 5 rows
+        
+        // Process headers
+        const headers = lines[0].split(',');
+        headers.forEach(header => {
+            if (header.trim()) {
+                const th = document.createElement('th');
+                th.textContent = header.trim();
+                previewHeaders.appendChild(th);
+            }
+        });
+        
+        // Process data rows
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim()) {
+                const tr = document.createElement('tr');
+                const cells = lines[i].split(',');
+                cells.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell.trim();
+                    tr.appendChild(td);
+                });
+                previewData.appendChild(tr);
+            }
+        }
+        
+        previewSection.style.display = 'block';
+        
+        // Show warning if many rows
+        if (content.split('\n').length > 100) {
+            document.getElementById('warning-message').textContent = 
+                'Large file detected (' + (content.split('\n').length - 1) + 
+                ' rows). Import may take several minutes.';
+            previewWarning.style.display = 'block';
+        }
+    };
+    reader.readAsText(file);
+});
+
+// Disable button during import to prevent duplicate submissions
+document.getElementById('import-form').addEventListener('submit', function() {
+    document.getElementById('import-button').disabled = true;
+    document.getElementById('import-button').innerHTML = 
+        '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Importing...';
+});
+</script>
+{% endblock %}
