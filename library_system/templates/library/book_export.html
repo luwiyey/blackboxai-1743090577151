@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Export Book Data{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title mb-4">
+                    <i class="fas fa-file-export me-2"></i>Export Book Data
+                </h2>
+
+                <form method="get" action="{% url 'book-export' %}">
+                    <div class="mb-4">
+                        <h5>Export Format</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="format" 
+                                   id="format-csv" value="csv" checked>
+                            <label class="form-check-label" for="format-csv">
+                                CSV (Excel compatible)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="format" 
+                                   id="format-json" value="json">
+                            <label class="form-check-label" for="format-json">
+                                JSON
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="format" 
+                                   id="format-xlsx" value="xlsx">
+                            <label class="form-check-label" for="format-xlsx">
+                                Excel (XLSX)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Date Range</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="start-date" class="form-label">From</label>
+                                <input type="date" class="form-control" id="start-date" name="start_date">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="end-date" class="form-label">To</label>
+                                <input type="date" class="form-control" id="end-date" name="end_date">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Fields to Include</h5>
+                        <div class="row">
+                            {% for field in export_fields %}
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="field-{{ field.name }}" name="fields" 
+                                           value="{{ field.name }}" checked>
+                                    <label class="form-check-label" for="field-{{ field.name }}">
+                                        {{ field.verbose_name }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'book-list' %}" class="btn btn-outline-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Export Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Quick Export</h5>
+                <p class="text-muted">One-click exports of common data sets:</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'book-export' %}?format=csv&preset=full" class="btn btn-outline-primary">
+                        <i class="fas fa-file-csv me-2"></i>Complete Catalog (CSV)
+                    </a>
+                    <a href="{% url 'book-export' %}?format=xlsx&preset=inventory" class="btn btn-outline-primary">
+                        <i class="fas fa-file-excel me-2"></i>Current Inventory (Excel)
+                    </a>
+                    <a href="{% url 'book-export' %}?format=json&preset=metadata" class="btn btn-outline-primary">
+                        <i class="fas fa-file-code me-2"></i>Metadata Only (JSON)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set default dates (last 30 days)
+window.addEventListener('DOMContentLoaded', (event) => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    
+    document.getElementById('end-date').valueAsDate = endDate;
+    document.getElementById('start-date').valueAsDate = startDate;
+});
+</script>
+{% endblock %}
