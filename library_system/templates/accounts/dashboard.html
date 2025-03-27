@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}My Library Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center">
+                {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" class="rounded-circle mb-3" width="150" height="150">
+                {% else %}
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="width: 150px; height: 150px;">
+                    <i class="fas fa-user fa-4x text-muted"></i>
+                </div>
+                {% endif %}
+                <h3>{{ user.get_full_name }}</h3>
+                <p class="text-muted">{{ user.email }}</p>
+                <p class="text-muted">Member since {{ user.date_joined|date:"M Y" }}</p>
+                <a href="{% url 'account_profile' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Account Summary</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Current Loans
+                        <span class="badge bg-primary rounded-pill">{{ current_loans.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Books Borrowed
+                        <span class="badge bg-primary rounded-pill">{{ loan_history.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Reviews Written
+                        <span class="badge bg-primary rounded-pill">{{ user.reviews.count }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title d-flex justify-content-between align-items-center">
+                    <span>Current Loans</span>
+                    <span class="badge bg-primary">{{ current_loans.count }}/{{ user.borrowing_limit }}</span>
+                </h5>
+                
+                {% if current_loans %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Book</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in current_loans %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'book-detail' loan.book.id %}">{{ loan.book.title }}</a>
+                                    <br>
+                                    <small class="text-muted">{{ loan.book.author }}</small>
+                                </td>
+                                <td>{{ loan.due_date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if loan.is_overdue %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                    {% else %}
+                                    <span class="badge bg-success">On Time</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            hx-post="{% url 'book-renew' loan.book.id %}"
+                                            hx-target="#loan-{{ loan.id }}"
+                                            hx-swap="outerHTML">
+                                        Renew
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">You don't have any current loans.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Borrowing History</h5>
+                {% if loan_history %}
+                <div class="list-group">
+                    {% for loan in loan_history %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <a href="{% url 'book-detail' loan.book.id %}">{{ loan.book.title }}</a>
+                            </h6>
+                            <small>{{ loan.checkout_date|date:"M d, Y" }} to {{ loan.returned_date|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1 text-muted">{{ loan.book.author }}</p>
+                        {% if loan.is_returned_late %}
+                        <small class="text-danger">Returned {{ loan.days_late }} days late</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Your borrowing history is empty.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
