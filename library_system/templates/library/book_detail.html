@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+            {% if book.cover_image %}
+            <img src="{{ book.cover_image.url }}" class="card-img-top" alt="{{ book.title }}">
+            {% else %}
+            <div class="text-center py-5 bg-light">
+                <i class="fas fa-book fa-5x text-muted"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if user.is_authenticated %}
+                        {% if book.is_available %}
+                        <button class="btn btn-primary btn-lg"
+                                hx-post="{% url 'book-borrow' book.id %}"
+                                hx-target="#book-actions"
+                                hx-swap="innerHTML">
+                            <i class="fas fa-bookmark me-2"></i>Borrow This Book
+                        </button>
+                        {% elif current_loan %}
+                        <button class="btn btn-warning btn-lg"
+                                hx-post="{% url 'book-return' book.id %}"
+                                hx-target="#book-actions"
+                                hx-swap="innerHTML">
+                            <i class="fas fa-undo me-2"></i>Return This Book
+                        </button>
+                        {% else %}
+                        <button class="btn btn-secondary btn-lg" disabled>
+                            <i class="fas fa-clock me-2"></i>Currently Checked Out
+                        </button>
+                        {% endif %}
+                    {% else %}
+                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login to Borrow
+                    </a>
+                    {% endif %}
+                </div>
+                <div id="book-actions" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="card-title">{{ book.title }}</h1>
+                <h4 class="text-muted mb-4">by {{ book.author }}</h4>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+                        <p><strong>Published:</strong> {{ book.publication_date|date:"Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Availability:</strong> 
+                            {% if book.is_available %}
+                            <span class="text-success">In Stock ({{ book.available }} copies)</span>
+                            {% else %}
+                            <span class="text-danger">Currently Unavailable</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Categories:</strong> 
+                            {% for category in book.categories.all %}
+                            <span class="badge bg-primary">{{ category.name }}</span>
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+                
+                <h5>Description</h5>
+                <p class="card-text">{{ book.description|linebreaks }}</p>
+                
+                <hr>
+                
+                <h5 class="mt-4">Reviews</h5>
+                {% if reviews %}
+                <div class="list-group mb-3">
+                    {% for review in reviews %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ review.user.get_full_name }}</h6>
+                            <small>{{ review.created_at|timesince }} ago</small>
+                        </div>
+                        <div class="mb-1">
+                            {% for i in "12345" %}
+                            <i class="fas fa-star{% if forloop.counter > review.rating %}-o{% endif %} text-warning"></i>
+                            {% endfor %}
+                        </div>
+                        <p class="mb-1">{{ review.comment }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No reviews yet.</p>
+                {% endif %}
+                
+                {% if user.is_authenticated and not user_review %}
+                <div class="mt-4">
+                    <h6>Add Your Review</h6>
+                    <form method="post" action="{% url 'book-review' book.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <select class="form-select" name="rating" required>
+                                <option value="" selected disabled>Select rating</option>
+                                <option value="5">5 - Excellent</option>
+                                <option value="4">4 - Good</option>
+                                <option value="3">3 - Average</option>
+                                <option value="2">2 - Poor</option>
+                                <option value="1">1 - Terrible</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <textarea class="form-control" name="comment" rows="3" placeholder="Your review..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
